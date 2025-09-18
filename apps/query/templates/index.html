@@ -1,0 +1,174 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Query Builder</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+
+    <div class="query-builder-container">
+        <h1>Django Query Builder</h1>
+        <form id="queryForm">
+
+            <div class="form-section">
+                <h3>1. Select Tables</h3>
+                <div class="selection-area-split">
+                    <div class="list-pane">
+                        <h4>Available Tables</h4>
+                        <div class="search-bar-wrapper">
+                            <span class="search-icon">&#128269;</span>
+                            <input type="text" id="tableSearch" placeholder="Search tables...">
+                            <button type="button" class="clear-search-btn" data-target="tableSearch" style="display: none;">&times;</button>
+                        </div>
+                        <div id="tableList" class="select-list"></div>
+                    </div>
+                    <div class="list-pane">
+                        <h4>Selected Tables</h4>
+                        <div id="selectedTableList" class="select-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>2. Select Columns</h3>
+                <div class="selection-area-split">
+                    <div class="list-pane">
+                        <h4>Available Columns</h4>
+                        <div class="search-bar-wrapper">
+                            <span class="search-icon">&#128269;</span>
+                            <input type="text" id="columnSearch" placeholder="Search columns...">
+                            <button type="button" class="clear-search-btn" data-target="columnSearch" style="display: none;">&times;</button>
+                        </div>
+                        <div id="columnList" class="select-list"></div>
+                    </div>
+                    <div class="list-pane">
+                        <h4>Selected Columns</h4>
+                        <div id="selectedColumnList" class="select-list"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3>3. Add Joins (Optional)</h3>
+                <div id="joinsContainer"></div>
+                <button type="button" id="addJoinBtn">+ Add Join</button>
+            </div>
+
+            <div class="form-section">
+                <div class="section-header">
+                    <h3>4. Add WHERE Conditions (Optional)</h3>
+                </div>
+                <div id="whereConditionsContainer"></div>
+            </div>
+            
+            <div class="form-section">
+                <h3>5. Data Shaping</h3>
+                <h4>Group By</h4>
+                <div id="groupByContainer"></div>
+                <button type="button" id="addGroupByBtn">+ Add Group By</button>
+                
+                <h4 class="h4-margin-top">Aggregates</h4>
+                <div id="aggregatesContainer"></div>
+                <button type="button" id="addAggregateBtn">+ Add Aggregate</button>
+                
+                <h4 class="h4-margin-top">Calculated Columns (Subqueries)</h4>
+                <div id="subqueryColumnContainer"></div>
+                <button type="button" id="addSubqueryColumnBtn">+ Add Subquery Column</button>
+            </div>
+
+            <div class="form-section">
+                <h3>6. Order By (Optional)</h3>
+                <div id="orderByContainer"></div>
+                <button type="button" id="addOrderByBtn">+ Add Order By</button>
+            </div>
+
+            <div class="form-section">
+                <h3>7. Limit</h3>
+                <div class="limit-container">
+                    <label for="limitInput">Return a maximum of</label>
+                    <input type="number" id="limitInput" value="100" min="1" max="5000">
+                    <label for="limitInput">rows</label>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <button type="submit" id="executeBtn">Execute Query</button>
+            </div>
+        </form>
+
+        <div id="statusMessage"></div>
+
+        <div class="results-container" id="resultsContainer" style="display: none;">
+            
+            <div class="table-header">
+                <h3>Query Results</h3>
+                <button type="button" id="toggleTableBtn" class="toggle-results-btn">Hide Table</button>
+            </div>
+            <div id="resultsTableContainer"></div>
+
+            <div id="queryFormatsContainer" class="query-formats-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="jsonResults">JSON Results</button>
+                    <button class="tab-button" data-tab="djangoOrm">Django ORM</button>
+                    <button class="tab-button" data-tab="rawSql">Raw SQL</button>
+                </div>
+                <div class="tab-content">
+                    <div id="jsonResults" class="tab-pane active">
+                        <pre><code id="jsonResultsContent"></code></pre>
+                    </div>
+                    <div id="djangoOrm" class="tab-pane">
+                        <pre><code id="djangoOrmContent"></code></pre>
+                    </div>
+                    <div id="rawSql" class="tab-pane">
+                        <pre><code id="rawSqlContent"></code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="subqueryModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Build Subquery</h3>
+                <button id="closeSubqueryBtn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-section">
+                    <label>Model</label>
+                    <select id="subqueryModelSelect"></select>
+                </div>
+                <div class="form-section">
+                    <label>Function</label>
+                    <select id="subqueryFunctionSelect">
+                        <option value="" selected>-- No Function (Optional) --</option>
+                        <option value="MAX">MAX</option>
+                        <option value="MIN">MIN</option>
+                        <option value="COUNT">COUNT</option>
+                        <option value="AVG">AVG</option>
+                        <option value="SUM">SUM</option>
+                    </select>
+                </div>
+                <div class="form-section">
+                    <label for="subqueryFieldSelect">Field to Return</label>
+                    <select id="subqueryFieldSelect"></select>
+                </div>
+                <div class="form-section">
+                    <h4>Subquery Filters (Optional, joined by AND)</h4>
+                    <div id="subqueryFiltersContainer"></div>
+                    <button type="button" id="addSubqueryFilterBtn" class="modal-add-btn">+ Add Sub-Filter</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="cancelSubqueryBtn" class="cancel-btn">Cancel</button>
+                <button type="button" id="saveSubqueryBtn" class="save-btn">Save Subquery</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'script.js' %}"></script>
+</body>
+</html>

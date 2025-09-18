@@ -1,0 +1,441 @@
+/* General Body and Container Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f4f7f9;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+}
+
+.query-builder-container {
+    max-width: 1200px;
+    margin: auto;
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+h1, h3, h4 {
+    color: #2c3e50;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 8px;
+    margin-top: 0;
+}
+
+h1 {
+    text-align: center;
+    border: none;
+    margin-bottom: 20px;
+}
+
+h4 {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    border-bottom: none;
+}
+
+.h4-margin-top {
+    margin-top: 25px;
+}
+
+/* Form Sections */
+.form-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #fdfdfd;
+}
+
+/* Dynamic Rows (for joins, filters, etc.) */
+.dynamic-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
+.dynamic-row select, .dynamic-row input[type="text"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    flex-grow: 1;
+}
+
+.dynamic-row .alias-input {
+    flex-grow: 0.5;
+}
+
+.remove-btn, .remove-btn-small {
+    padding: 5px 10px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.remove-btn-small {
+    padding: 2px 8px;
+    font-size: 1.2em;
+}
+
+.remove-btn:hover, .remove-btn-small:hover {
+    background-color: #c0392b;
+}
+
+/* Buttons */
+button {
+    cursor: pointer;
+}
+
+button[type="submit"], button[type="button"] {
+    padding: 10px 15px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+button[type="submit"]:hover, button[type="button"]:hover {
+    background-color: #2980b9;
+}
+
+button#executeBtn {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.2em;
+    background-color: #27ae60;
+}
+
+button#executeBtn:hover {
+    background-color: #229954;
+}
+
+/* Two-Pane Selection Area */
+.selection-area-split {
+    display: flex;
+    gap: 20px;
+}
+
+.list-pane {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    background: #fff;
+}
+
+.select-list {
+    height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 10px;
+    background: #fdfdfd;
+}
+
+.select-list-item, .selected-column-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.select-list-item:hover {
+    background-color: #ecf0f1;
+}
+
+.select-list-table-header {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-bottom: 1px solid #ddd;
+    position: sticky;
+    top: 0;
+}
+
+.selected-column-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.selected-column-item .column-name-text {
+    flex-grow: 1;
+}
+.selected-column-item .alias-input {
+    width: 100px;
+    padding: 4px;
+}
+
+/* Improved Search Bar Styles */
+.search-bar-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-bar-wrapper input[type="text"] {
+    width: 100%;
+    padding: 8px 30px; /* Make space for icons */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.search-bar-wrapper .search-icon {
+    position: absolute;
+    left: 10px;
+    color: #777;
+    pointer-events: none; /* Make icon non-interactive */
+}
+
+.search-bar-wrapper .clear-search-btn {
+    position: absolute;
+    right: 5px;
+    background: none;
+    border: none;
+    font-size: 1.4em;
+    color: #888;
+    cursor: pointer;
+    padding: 0 5px;
+}
+.search-bar-wrapper .clear-search-btn:hover {
+    color: #333;
+}
+
+
+/* WHERE Clause Filter Groups */
+.filter-group {
+    border-left: 2px solid #3498db;
+    padding-left: 15px;
+    margin-top: 10px;
+    background-color: rgba(52, 152, 219, 0.05);
+    border-radius: 4px;
+}
+
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 5px;
+}
+
+.condition-toggle {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    display: inline-flex;
+}
+
+.condition-toggle input {
+    display: none;
+}
+
+.condition-toggle label {
+    padding: 5px 12px;
+    cursor: pointer;
+    background: #f0f0f0;
+}
+
+.condition-toggle input:checked + label {
+    background: #3498db;
+    color: white;
+    font-weight: bold;
+}
+
+/* Subquery Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.close-btn {
+    background: none; border: none; font-size: 1.8em; cursor: pointer;
+}
+
+.modal-body select, .modal-body input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.outer-ref-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Status and Results */
+#statusMessage {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+}
+.status.loading { background-color: #f0ad4e; color: white; }
+.status.success { background-color: #5cb85c; color: white; }
+.status.error { background-color: #d9534f; color: white; }
+
+.results-container {
+    margin-top: 20px;
+}
+
+/* --- UI UPDATE: Styles for new Table Header and Toggle Button --- */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #f7f7f7;
+    border: 1px solid #ddd;
+    border-radius: 5px 5px 0 0;
+}
+.table-header h3 {
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+.toggle-results-btn {
+    background-color: #7f8c8d;
+    font-size: 0.9em;
+    padding: 6px 12px;
+}
+.toggle-results-btn:hover {
+    background-color: #6c7a7b;
+}
+
+#resultsTableContainer {
+    border: 1px solid #ddd;
+    border-top: none;
+    padding: 20px;
+    border-radius: 0 0 5px 5px;
+}
+
+#resultsTableContainer table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0; /* Adjusted from 15px */
+}
+
+#resultsTableContainer th, #resultsTableContainer td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+#resultsTableContainer th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+/* Query Formats Tabs */
+.query-formats-container {
+    margin-top: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.tab-buttons {
+    display: flex;
+    background-color: #f1f1f1;
+    border-bottom: 1px solid #ccc;
+}
+
+.tab-button {
+    background-color: inherit;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    font-size: 16px;
+    font-weight: 500;
+    color: #555;
+    border-right: 1px solid #ccc;
+}
+
+.tab-button:last-child {
+    border-right: none;
+}
+
+.tab-button:hover {
+    background-color: #ddd;
+}
+
+.tab-button.active {
+    background-color: #fff;
+    color: #007bff;
+    border-bottom: 2px solid #007bff;
+    margin-bottom: -1px;
+}
+
+.tab-content {
+    padding: 15px;
+    background-color: #fff;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* --- UI UPDATE: Fixed height and scrolling for code blocks --- */
+.tab-pane pre {
+    background-color: #2d2d2d;
+    color: #f1f1f1;
+    padding: 15px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Courier New', Courier, monospace;
+    max-height: 400px; /* Fixed height */
+    overflow-y: auto;  /* Scroll on overflow */
+}
