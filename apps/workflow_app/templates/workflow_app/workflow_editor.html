@@ -232,7 +232,10 @@
                             <i class="fas fa-plus"></i> Add Variable
                         </button>
                         <div id="variables-list" class="variables-list">
-                            <!-- Variables will be listed here -->
+                            <div class="empty-message">
+                                <i class="fas fa-info-circle"></i>
+                                <p>No variables defined. Variables allow you to store and reuse values across nodes.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -242,15 +245,25 @@
                         <form id="workflow-settings-form">
                             <div class="form-group">
                                 <label for="timeout-setting">Execution Timeout (seconds)</label>
-                                <input type="number" id="timeout-setting" name="timeout" value="300" min="1" max="3600">
+                                <input type="number" id="timeout-setting" name="timeout" value="{{ workflow.timeout_seconds|default:300 }}" min="1" max="3600">
                             </div>
                             <div class="form-group">
                                 <label for="retries-setting">Max Retries</label>
-                                <input type="number" id="retries-setting" name="retries" value="3" min="0" max="10">
+                                <input type="number" id="retries-setting" name="retries" value="{{ workflow.max_retries|default:3 }}" min="0" max="10">
                             </div>
                             <div class="form-group">
                                 <label for="retry-delay-setting">Retry Delay (seconds)</label>
-                                <input type="number" id="retry-delay-setting" name="retry_delay" value="60" min="1" max="3600">
+                                <input type="number" id="retry-delay-setting" name="retry_delay" value="{{ workflow.retry_delay_seconds|default:60 }}" min="1" max="3600">
+                            </div>
+                            <div class="form-group">
+                                <label for="cron-setting">Schedule (Cron Expression)</label>
+                                <input type="text" id="cron-setting" name="cron_expression" value="{{ workflow.cron_expression|default:'' }}" placeholder="0 9 * * * (daily at 9 AM)">
+                                <small class="form-help">Leave empty to disable scheduling</small>
+                            </div>
+                            <div class="form-group">
+                                <button type="button" id="save-settings" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Settings
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -273,8 +286,21 @@
     </div>
 
     <!-- JavaScript -->
-    <script src="{% static 'workflow_app/js/workflow-editor.js' %}"></script>
     <script>
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+        `;
+        document.head.appendChild(style);
+        
         // Initialize editor with workflow data
         const workflowData = {{ workflow_json|safe }};
         const workflowId = "{{ workflow.id|default:'' }}";
@@ -282,13 +308,51 @@
         
         // Initialize the workflow editor
         document.addEventListener('DOMContentLoaded', function() {
-            window.workflowEditor = new WorkflowEditor({
+            window.workflowEditor = new WorkflowEditorMain({
                 workflowId: workflowId,
                 workflowData: workflowData,
                 csrfToken: csrfToken,
                 apiBaseUrl: '/workflow/api/workflows/'
             });
+            
+            // Setup settings form
+            document.getElementById('save-settings')?.addEventListener('click', function() {
+                const form = document.getElementById('workflow-settings-form');
+                const formData = new FormData(form);
+                const settings = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    settings[key] = value;
+                }
+                
+                // Save settings
+                if (workflowId) {
+                    fetch(`/workflow/api/workflows/${workflowId}/`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({
+                            timeout_seconds: parseInt(settings.timeout) || 300,
+                            max_retries: parseInt(settings.retries) || 3,
+                            retry_delay_seconds: parseInt(settings.retry_delay) || 60,
+                            cron_expression: settings.cron_expression || '',
+                            is_scheduled: !!settings.cron_expression
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        window.workflowEditor.showNotification('Settings saved successfully', 'success');
+                    })
+                    .catch(error => {
+                        console.error('Error saving settings:', error);
+                        window.workflowEditor.showNotification('Failed to save settings', 'error');
+                    });
+                }
+            });
         });
     </script>
+    <script src="{% static 'workflow_app/js/workflow-editor.js' %}"></script>
 </body>
 </html>

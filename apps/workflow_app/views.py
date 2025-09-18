@@ -27,6 +27,7 @@ from .serializers import (
 )
 from .engine import WorkflowEngine
 from .tasks import execute_workflow_task
+from .scheduler import schedule_workflow, unschedule_workflow
 
 # Dashboard View
 @login_required
@@ -542,6 +543,13 @@ class WorkflowViewSet(viewsets.ModelViewSet):
         workflow.status = 'active'
         workflow.save()
         
+        # Schedule if cron expression is provided
+        if workflow.cron_expression:
+            try:
+                schedule_workflow(workflow, workflow.cron_expression, workflow.timezone)
+            except Exception as e:
+                pass  # Continue even if scheduling fails
+        
         return Response({'status': 'active', 'message': 'Workflow activated'})
     
     @action(detail=True, methods=['post'])
@@ -550,6 +558,13 @@ class WorkflowViewSet(viewsets.ModelViewSet):
         workflow = self.get_object()
         workflow.status = 'inactive'
         workflow.save()
+        
+        # Unschedule if scheduled
+        if workflow.is_scheduled:
+            try:
+                unschedule_workflow(workflow)
+            except Exception as e:
+                pass  # Continue even if unscheduling fails
         
         return Response({'status': 'inactive', 'message': 'Workflow deactivated'})
     
@@ -593,6 +608,81 @@ class WorkflowViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename="workflow-{workflow.name}.json"'
         
         return response
+    
+    @action(detail=True, methods=['get'])
+    def validate(self, request, pk=None):
+        """Validate workflow definition"""
+        workflow = self.get_object()
+        
+        errors = []
+        warnings = []
+        
+        definition = workflow.definition or {}
+        nodes = definition.get('nodes', [])
+        connections = definition.get('connections', [])
+        
+        # Check for trigger nodes
+        trigger_nodes = [n for n in nodes if self.nodeTypes.get(n.get('type', ''), {}).get('category') == 'trigger']
+        if not trigger_nodes:
+            errors.append("Workflow must have at least one trigger node")
+        
+        # Check for orphaned nodes
+        connected_nodes = set()
+        for conn in connections:
+            connected_nodes.add(conn.get('source'))
+            connected_nodes.add(conn.get('target'))
+        
+        for node in nodes:
+            if node['id'] not in connected_nodes and len(nodes) > 1:
+                warnings.append(f"Node '{node.get('name', node['id'])}' is not connected")
+        
+        # Check for cycles
+        if self._has_cycles(nodes, connections):
+            errors.append("Workflow contains cycles")
+        
+        return Response({
+            'valid': len(errors) == 0,
+            'errors': errors,
+            'warnings': warnings
+        })
+    
+    def _has_cycles(self, nodes, connections):
+        """Check if workflow has cycles using DFS"""
+        # Build adjacency list
+        graph = {}
+        for node in nodes:
+            graph[node['id']] = []
+        
+        for conn in connections:
+            source = conn.get('source')
+            target = conn.get('target')
+            if source in graph:
+                graph[source].append(target)
+        
+        # DFS to detect cycles
+        visited = set()
+        rec_stack = set()
+        
+        def has_cycle_util(node):
+            visited.add(node)
+            rec_stack.add(node)
+            
+            for neighbor in graph.get(node, []):
+                if neighbor not in visited:
+                    if has_cycle_util(neighbor):
+                        return True
+                elif neighbor in rec_stack:
+                    return True
+            
+            rec_stack.remove(node)
+            return False
+        
+        for node_id in graph:
+            if node_id not in visited:
+                if has_cycle_util(node_id):
+                    return True
+        
+        return False
 
 class WorkflowExecutionViewSet(viewsets.ReadOnlyModelViewSet):
     """API for workflow executions"""

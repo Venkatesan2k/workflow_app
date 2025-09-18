@@ -3,6 +3,7 @@ import json
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 User = 'system.User'
 
@@ -97,6 +98,43 @@ class Workflow(models.Model):
     def get_connections(self):
         """Extract connections from workflow definition"""
         return self.definition.get('connections', [])
+    
+    def validate_definition(self):
+        """Validate workflow definition"""
+        errors = []
+        
+        if not self.definition:
+            errors.append("Workflow definition is required")
+            return errors
+        
+        nodes = self.definition.get('nodes', [])
+        connections = self.definition.get('connections', [])
+        
+        if not nodes:
+            errors.append("Workflow must have at least one node")
+        
+        # Check for trigger nodes
+        trigger_nodes = []
+        for node in nodes:
+            try:
+                from .models import NodeType
+                node_type = NodeType.objects.get(name=node.get('type', ''))
+                if node_type.category == 'trigger':
+                    trigger_nodes.append(node)
+            except NodeType.DoesNotExist:
+                errors.append(f"Unknown node type: {node.get('type', '')}")
+        
+        if not trigger_nodes:
+            errors.append("Workflow must have at least one trigger node")
+        
+        return errors
+    
+    def clean(self):
+        """Validate model before saving"""
+        super().clean()
+        errors = self.validate_definition()
+        if errors:
+            raise ValidationError({'definition': errors})
 
 class WorkflowExecution(models.Model):
     """Individual workflow execution instance"""

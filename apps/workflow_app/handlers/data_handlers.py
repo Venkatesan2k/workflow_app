@@ -6,6 +6,7 @@ import requests
 from typing import Dict, Any
 from django.db import connection
 from .base import BaseNodeHandler
+from django.apps import apps
 
 class DatabaseQueryHandler(BaseNodeHandler):
     """Handler for database query nodes"""
@@ -145,3 +146,137 @@ class HttpRequestHandler(BaseNodeHandler):
             raise ValueError(f"HTTP request timed out after {timeout} seconds")
         except requests.exceptions.RequestException as e:
             raise ValueError(f"HTTP request failed: {str(e)}")
+
+class QueryBuilderHandler(BaseNodeHandler):
+    """Handler for advanced query builder nodes"""
+    
+    def execute(self, config: Dict[str, Any], input_data: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            # Parse configuration
+            tables = self._parse_json_field(config.get('tables', '[]'))
+            columns = self._parse_json_field(config.get('columns', '[]'))
+            joins = self._parse_json_field(config.get('joins', '[]'))
+            where_conditions = self._parse_json_field(config.get('where_conditions', '{}'))
+            limit = config.get('limit', 100)
+            
+            if not tables:
+                raise ValueError("At least one table is required")
+            
+            # Build SQL query
+            query_parts = []
+            params = []
+            
+            # SELECT clause
+            if columns:
+                select_parts = []
+                for col in columns:
+                    if isinstance(col, dict):
+                        column_name = col.get('column', '')
+                        alias = col.get('alias', '')
+                        if column_name:
+                            if alias:
+                                select_parts.append(f"`{column_name}` AS `{alias}`")
+                            else:
+                                select_parts.append(f"`{column_name}`")
+                    elif isinstance(col, str):
+                        select_parts.append(f"`{col}`")
+                
+                if select_parts:
+                    query_parts.append(f"SELECT {', '.join(select_parts)}")
+                else:
+                    query_parts.append("SELECT *")
+            else:
+                query_parts.append("SELECT *")
+            
+            # FROM clause
+            base_table = tables[0]
+            query_parts.append(f"FROM `{base_table}`")
+            
+            # JOIN clauses
+            if joins:
+                for join in joins:
+                    if isinstance(join, dict):
+                        left_table = join.get('left_table', '')
+                        right_table = join.get('right_table', '')
+                        left_field = join.get('left_field', '')
+                        right_field = join.get('right_field', '')
+                        
+                        if all([left_table, right_table, left_field, right_field]):
+                            query_parts.append(
+                                f"LEFT JOIN `{right_table}` ON `{left_table}`.`{left_field}` = `{right_table}`.`{right_field}`"
+                            )
+            
+            # WHERE clause
+            if where_conditions and isinstance(where_conditions, dict):
+                where_sql, where_params = self._build_where_clause(where_conditions)
+                if where_sql:
+                    query_parts.append(f"WHERE {where_sql}")
+                    params.extend(where_params)
+            
+            # LIMIT clause
+            if limit:
+                query_parts.append(f"LIMIT {int(limit)}")
+            
+            # Execute query
+            final_query = ' '.join(query_parts)
+            
+            with connection.cursor() as cursor:
+                cursor.execute(final_query, params)
+                columns = [col[0] for col in cursor.description]
+                results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            
+            return {
+                'data': results,
+                'count': len(results),
+                'query': final_query,
+                'success': True,
+                'message': f'Query executed successfully, returned {len(results)} rows'
+            }
+            
+        except Exception as e:
+            self.log_execution(f"Query builder execution failed: {str(e)}", 'error')
+            raise ValueError(f"Query execution failed: {str(e)}")
+    
+    def _parse_json_field(self, value):
+        """Parse JSON field value"""
+        if isinstance(value, str):
+            try:
+                return json.loads(value) if value.strip() else []
+            except json.JSONDecodeError:
+                return []
+        return value or []
+    
+    def _build_where_clause(self, conditions):
+        """Build WHERE clause from conditions object"""
+        if not conditions or not conditions.get('rules'):
+            return "", []
+        
+        condition_type = conditions.get('condition', 'AND').upper()
+        rules = conditions.get('rules', [])
+        
+        sql_parts = []
+        params = []
+        
+        for rule in rules:
+            if isinstance(rule, dict):
+                field = rule.get('field', '')
+                operator = rule.get('operator', '=')
+                value = rule.get('value')
+                
+                if field and operator and value is not None:
+                    # Handle different operators
+                    if operator.upper() in ['IN', 'NOT IN']:
+                        if isinstance(value, list):
+                            placeholders = ', '.join(['%s'] * len(value))
+                            sql_parts.append(f"`{field}` {operator.upper()} ({placeholders})")
+                            params.extend(value)
+                    elif operator.upper() in ['IS NULL', 'IS NOT NULL']:
+                        sql_parts.append(f"`{field}` {operator.upper()}")
+                    else:
+                        sql_parts.append(f"`{field}` {operator} %s")
+                        params.append(value)
+        
+        if sql_parts:
+            return f" {condition_type} ".join(sql_parts), params
+        
+        return "", []

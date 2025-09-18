@@ -9,7 +9,7 @@ from .transform_handlers import DataTransformHandler, JsonParserHandler
 from .condition_handlers import ConditionHandler, SwitchHandler
 from .action_handlers import EmailSendHandler, SlackNotificationHandler
 from .output_handlers import DatabaseSaveHandler, FileExportHandler
-from .command_handlers import CommandExecutionHandler, FileOperationHandler
+from .command_handlers import CommandExecutionHandler, FileOperationHandler, ManualTriggerHandler
 
 # Registry of all node handlers
 NODE_HANDLERS = {

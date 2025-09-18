@@ -285,8 +285,6 @@ class WorkflowEngine:
         self, 
         execution: WorkflowExecution,
         graph: Dict,
-        nodes: List[Dict],
-        connections: List[Dict],
         context: Dict,
         results: Dict
     ) -> bool:
@@ -316,7 +314,7 @@ class WorkflowEngine:
                 node_input = self._prepare_node_input(
                     node_id, 
                     node_def, 
-                    incoming, 
+                    graph['incoming'], 
                     results, 
                     context
                 )
@@ -334,14 +332,13 @@ class WorkflowEngine:
                 results[node_id] = node_result
                 
                 # Handle conditional branching
-                if node_result.get('branch_condition'):
+                if 'branch_condition' in node_result:
                     # Skip certain downstream nodes based on condition result
                     self._handle_conditional_branching(
                         node_id, 
                         node_result, 
                         graph, 
-                        execution_order,
-                        results
+                        nodes_to_skip
                     )
                 
             except Exception as e:
@@ -626,31 +623,6 @@ class WorkflowEngine:
             return json.loads(json_str)
         except:
             return {'_error': 'Could not serialize data', 'type': str(type(data))}
-    
-    def _handle_conditional_branching(
-        self,
-        node_id: str,
-        node_result: Dict,
-        graph: Dict,
-        execution_order: List[str],
-        results: Dict
-    ):
-        """
-        Handle conditional branching logic
-        
-        Args:
-            node_id: ID of the conditional node
-            node_result: Result from the conditional node
-            graph: Execution graph
-            execution_order: Current execution order
-            results: Node results dictionary
-        """
-        # This is a placeholder for conditional branching logic
-        # In a full implementation, you would:
-        # 1. Check the branch_condition in node_result
-        # 2. Determine which downstream paths to follow
-        # 3. Mark certain nodes as skipped in the results
-        pass
     
     def _load_workflow_variables(self, workflow) -> Dict:
         """

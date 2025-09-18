@@ -168,6 +168,50 @@ class Command(BaseCommand):
                 },
                 'handler_class': 'apps.workflow_app.handlers.data_handlers.DatabaseQueryHandler'
             },
+            {
+                'name': 'query_builder',
+                'display_name': 'Advanced Query Builder',
+                'category': 'data',
+                'description': 'Build complex database queries with UI',
+                'icon': 'fa-search',
+                'color': '#7c3aed',
+                'config_schema': {
+                    'fields': [
+                        {
+                            'name': 'tables',
+                            'type': 'textarea',
+                            'placeholder': '["users", "orders"]',
+                            'label': 'Tables (JSON Array)',
+                            'required': True
+                        },
+                        {
+                            'name': 'columns',
+                            'type': 'textarea',
+                            'placeholder': '[{"column": "users.name", "alias": "user_name"}]',
+                            'label': 'Columns (JSON Array)'
+                        },
+                        {
+                            'name': 'joins',
+                            'type': 'textarea',
+                            'placeholder': '[{"left_table": "users", "right_table": "orders", "left_field": "id", "right_field": "user_id"}]',
+                            'label': 'Joins (JSON Array)'
+                        },
+                        {
+                            'name': 'where_conditions',
+                            'type': 'textarea',
+                            'placeholder': '{"condition": "AND", "rules": [{"field": "users.active", "operator": "=", "value": true}]}',
+                            'label': 'WHERE Conditions (JSON)'
+                        },
+                        {
+                            'name': 'limit',
+                            'type': 'number',
+                            'default': 100,
+                            'label': 'Limit'
+                        }
+                    ]
+                },
+                'handler_class': 'apps.workflow_app.handlers.data_handlers.QueryBuilderHandler'
+            },
             
             # Transform
             {
